@@ -215,7 +215,42 @@
         .color-dot:hover { transform: scale(1.1); }
     </style>
 </head>
-<body onload="initApp()">
+<body onload="function initApp() {
+            // TỰ ĐỘNG TẢI ĐỀ TỪ FILE deontap.json TRÊN GITHUB
+            fetch('deontap.json?' + Date.now()) // Thêm ?Date.now() để chống cache trình duyệt
+                .then(response => response.json())
+                .then(data => {
+                    if(data && data.id) {
+                        appData.sets = {}; // Reset kho đề, ưu tiên dùng đề chuẩn từ file chung
+                        appData.sets[data.id] = data;
+                        saveAppData();
+                    }
+                })
+                .catch(err => console.log("Không tải được file đề chung, dùng dữ liệu local"));
+
+            let saved = localStorage.getItem(STORAGE_KEY);
+            if(saved) {
+                try { 
+                    let parsed = JSON.parse(saved);
+                    if(parsed && parsed.sets && Object.keys(parsed.sets).length > 0) {
+                        // Giữ lại các bộ đề user đã tự tạo thêm nếu có, nhưng ưu tiên nạp đề từ file chung
+                        Object.keys(appData.sets).forEach(k => parsed.sets[k] = appData.sets[k]);
+                        appData = parsed;
+                    }
+                } catch(e) {}
+            }
+            saveAppData();
+
+            let savedTheme = localStorage.getItem('azota_theme_color');
+            if(savedTheme) changeThemeColor(savedTheme, true);
+            if(localStorage.getItem('azota_dark_mode') === '1') {
+                document.body.classList.add('theme-dark');
+            }
+
+            localStorage.removeItem(DRAFT_KEY);
+            setupImageInputs();
+            renderSetsManager();
+        }">
 
     <button class="exit-focus-btn" onclick="toggleFocusMode()" title="Thoát Focus Mode">❌</button>
 
